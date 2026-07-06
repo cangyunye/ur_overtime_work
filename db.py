@@ -2,7 +2,7 @@
 
 import sqlite3
 import threading
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import config
 
@@ -411,3 +411,46 @@ def export_all_records(date_from=None, date_to=None, company=None, project_team=
         params,
     )
     return [dict(r) for r in cur.fetchall()]
+
+
+def get_stats():
+    """获取概览统计数据"""
+    conn = _get_connection()
+    ph = _get_placeholder(0)
+
+    stats = {"weekly_count": 0, "monthly_hours": 0, "pending_count": 0, "total_count": 0}
+
+    # 总数
+    cur = conn.cursor()
+    cur.execute("SELECT COUNT(*) as total FROM overtime_records")
+    stats["total_count"] = dict(cur.fetchone())["total"]
+
+    # 本周人次
+    cur.execute("SELECT MIN(overtime_date) FROM overtime_records")
+    today = datetime.now()
+    monday = today - timedelta(days=today.weekday())
+    monday_str = monday.strftime("%Y-%m-%d")
+    cur.execute(
+        f"SELECT COUNT(*) as total FROM overtime_records WHERE overtime_date >= {ph}",
+        (monday_str,),
+    )
+    stats["weekly_count"] = dict(cur.fetchone())["total"]
+
+    # 本月总时长（小时）
+    month_start = today.replace(day=1).strftime("%Y-%m-%d")
+    cur.execute(
+        f"SELECT start_time, end_time FROM overtime_records WHERE overtime_date >= {ph}",
+        (month_start,),
+    )
+    total_hours = 0
+    for row in cur.fetchall():
+        d = dict(row)
+        try:
+            st = datetime.strptime(d["start_time"], "%Y-%m-%d %H:%M:%S")
+            et = datetime.strptime(d["end_time"], "%Y-%m-%d %H:%M:%S")
+            total_hours += (et - st).total_seconds() / 3600
+        except (ValueError, KeyError):
+            pass
+    stats["monthly_hours"] = round(total_hours, 1)
+
+    return stats

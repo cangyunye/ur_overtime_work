@@ -137,6 +137,8 @@ class OvertimeHandler(SimpleHTTPRequestHandler):
             self._handle_export(parsed.query)
         elif path == "/api/auto-fill":
             self._handle_auto_fill(parsed.query)
+        elif path == "/api/stats":
+            self._handle_stats()
         elif path.startswith("/api/records/") and path.count("/") == 3:
             record_id = path.split("/")[-1]
             self._handle_get_record(record_id)
@@ -341,6 +343,11 @@ class OvertimeHandler(SimpleHTTPRequestHandler):
             return
 
         result = db.lookup_employee_info(name=name, employee_id=employee_id)
+        self._send_json(result)
+
+    def _handle_stats(self):
+        """获取概览统计数据"""
+        result = db.get_stats()
         self._send_json(result)
 
     def _handle_get_record(self, record_id):

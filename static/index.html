@@ -1,225 +1,1578 @@
-<!DOCTYPE html>
-<html lang="zh-CN">
+<!doctype html>
+<html lang="zh-CN" data-theme="sunlight">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>加班登记系统</title>
-  <link rel="stylesheet" href="css/style.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>加班登记系统</title>
+<style>
+/* ====================================================
+   加班登记系统 — 双主题单页版
+   日光黄浅色（默认） / 月光白暗色
+   ==================================================== */
+
+/* ---- 共享 Token（字体/圆角/过渡） ---- */
+:root {
+  --radius-sm: 4px;
+  --radius:    8px;
+  --radius-lg: 12px;
+
+  --font-display: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+  --font-body:    -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+
+  --ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ---- 日光黄浅色主题（默认） — 暖调日光 ---- */
+[data-theme="sunlight"] {
+  --bg:           oklch(96% 0.016 85);
+  --surface:      oklch(99% 0.008 85);
+  --surface-2:    oklch(93% 0.014 85);
+  --fg:           oklch(22% 0.02 75);
+  --fg-soft:      oklch(35% 0.018 70);
+  --muted:        oklch(50% 0.015 70);
+  --border:       oklch(88% 0.012 85);
+  --accent:       oklch(62% 0.16 75);
+  --accent-dim:   oklch(62% 0.16 75 / 0.15);
+  --accent-hov:   oklch(68% 0.18 75);
+  --danger:       oklch(58% 0.2 25);
+  --danger-dim:   oklch(58% 0.2 25 / 0.15);
+  --danger-hov:   oklch(62% 0.22 25);
+  --success:      oklch(55% 0.15 145);
+  --success-dim:  oklch(55% 0.15 145 / 0.15);
+  --warn:         oklch(65% 0.16 85);
+  --warn-dim:     oklch(65% 0.16 85 / 0.15);
+
+  --hover-border:    oklch(80% 0.015 85);
+  --thead-bg:        oklch(92% 0.012 85);
+  --td-border:       oklch(90% 0.01 85);
+  --row-hover:       oklch(93% 0.015 85);
+  --scrollbar-hover: oklch(82% 0.01 85);
+  --modal-overlay:   rgba(0,0,0,0.35);
+  --kbd-bg:          oklch(96% 0.016 85);
+  --badge-day-bg:    oklch(65% 0.16 85 / 0.18);
+  --badge-night-bg:  oklch(62% 0.16 75 / 0.15);
+  --clock-color:     oklch(50% 0.015 70);
+}
+
+/* ---- 月光白暗色主题 — 冷调月夜 ---- */
+[data-theme="moonlight"] {
+  --bg:           oklch(9% 0.012 260);
+  --surface:      oklch(13% 0.015 260);
+  --surface-2:    oklch(16% 0.018 260);
+  --fg:           oklch(92% 0.006 260);
+  --fg-soft:      oklch(78% 0.006 260);
+  --muted:        oklch(55% 0.008 260);
+  --border:       oklch(20% 0.008 260);
+  --accent:       oklch(68% 0.08 250);
+  --accent-dim:   oklch(68% 0.08 250 / 0.14);
+  --accent-hov:   oklch(73% 0.1 250);
+  --danger:       oklch(58% 0.2 25);
+  --danger-dim:   oklch(58% 0.2 25 / 0.15);
+  --danger-hov:   oklch(62% 0.22 25);
+  --success:      oklch(58% 0.16 145);
+  --success-dim:  oklch(58% 0.16 145 / 0.15);
+  --warn:         oklch(65% 0.16 85);
+  --warn-dim:     oklch(65% 0.16 85 / 0.15);
+
+  --hover-border:    oklch(24% 0.01 260);
+  --thead-bg:        oklch(11% 0.015 260);
+  --td-border:       oklch(17% 0.01 260);
+  --row-hover:       oklch(16% 0.015 260);
+  --scrollbar-hover: oklch(28% 0.01 260);
+  --modal-overlay:   rgba(0,0,0,0.55);
+  --kbd-bg:          oklch(9% 0.012 260);
+  --badge-day-bg:    oklch(65% 0.16 85 / 0.15);
+  --badge-night-bg:  oklch(68% 0.08 250 / 0.14);
+  --clock-color:     oklch(55% 0.008 260);
+}
+
+/* ---- 全局过渡（平滑切换主题） ---- */
+html {
+  transition: background 0.35s var(--ease), color 0.35s var(--ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html, body, .topbar, .stat-item, .form-card, .records-card,
+  .theme-toggle, .btn, .preset-btn, .modal-overlay, .modal,
+  .confirm-box, .toast { transition: none !important; }
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--fg);
+  font: 14px/1.6 var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background 0.35s var(--ease), color 0.35s var(--ease);
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-hover); }
+::selection { background: var(--accent); color: #fff; }
+
+/* ---- 页面容器 ---- */
+
+.page {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 24px 40px;
+}
+
+/* ---- 顶部栏 ---- */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 20px;
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 10;
+  transition: background 0.35s var(--ease), border-color 0.35s var(--ease);
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.topbar-left svg { flex-shrink: 0; transition: stroke 0.35s var(--ease); }
+
+.topbar-left h1 {
+  font-size: 1rem;
+  font-weight: 600;
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.topbar-right .time {
+  font-size: 0.78rem;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--clock-color);
+  transition: color 0.35s var(--ease);
+}
+
+/* 主题切换按钮 */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: all 0.25s var(--ease);
+  white-space: nowrap;
+  font-weight: 500;
+}
+.theme-toggle:hover {
+  border-color: var(--accent);
+  color: var(--fg);
+  background: var(--accent-dim);
+}
+.theme-toggle .icon { font-size: 0.85rem; line-height: 1; }
+
+/* ---- 统计行 ---- */
+
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.stat-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: background 0.35s var(--ease), border-color 0.2s, border-color 0.35s var(--ease);
+}
+
+.stat-item:hover { border-color: var(--hover-border); }
+
+.stat-item .stat-l {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stat-item .stat-label {
+  font-size: 0.72rem;
+  color: var(--muted);
+  letter-spacing: 0.03em;
+  transition: color 0.35s var(--ease);
+}
+
+.stat-item .stat-value {
+  font-size: 1.4rem;
+  font-weight: 600;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.stat-item .stat-value.accent { color: var(--accent); }
+.stat-item .stat-value.success { color: var(--success); }
+.stat-item .stat-value.warn { color: var(--warn); }
+
+.stat-item .stat-r {
+  font-size: 0.7rem;
+  color: var(--muted);
+  text-align: right;
+  line-height: 1.3;
+  transition: color 0.35s var(--ease);
+}
+
+/* ---- 内容双栏布局 ---- */
+
+.content-grid {
+  display: grid;
+  grid-template-columns: 420px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .content-grid { grid-template-columns: 1fr; }
+}
+
+/* ---- 登记表单 ---- */
+
+.form-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: background 0.35s var(--ease), border-color 0.35s var(--ease);
+}
+
+.form-card-header {
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: border-color 0.35s var(--ease);
+}
+
+.form-card-header h3 {
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+.form-card-body {
+  padding: 16px 18px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.form-row.third {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+
+.form-row.full {
+  grid-template-columns: 1fr;
+  margin-bottom: 0;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.form-field label {
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+  transition: color 0.35s var(--ease);
+}
+
+.form-field label .req {
+  color: var(--danger);
+  margin-left: 1px;
+}
+
+.form-field input,
+.form-field select,
+.form-field textarea {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  color: var(--fg);
+  background: var(--bg);
+  font-family: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.35s var(--ease), color 0.35s var(--ease);
+  outline: none;
+}
+
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-dim);
+}
+
+.form-field input.error {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 2px var(--danger-dim);
+}
+
+.form-field textarea {
+  resize: vertical;
+  min-height: 52px;
+}
+
+.form-field .error-text {
+  font-size: 0.7rem;
+  color: var(--danger);
+  display: none;
+}
+.form-field .error-text.show { display: block; }
+
+.form-field input[type="date"],
+.form-field input[type="time"] {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.78rem;
+}
+
+/* 时段预设 */
+.presets {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.preset-btn {
+  padding: 4px 12px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-family: inherit;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s var(--ease), background 0.35s var(--ease), color 0.35s var(--ease);
+  font-weight: 500;
+}
+
+.preset-btn:hover {
+  border-color: var(--accent-dim);
+  color: var(--fg);
+}
+
+.preset-btn.active {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+/* 表单底部 */
+.form-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  border-top: 1px solid var(--border);
+  gap: 10px;
+  transition: border-color 0.35s var(--ease);
+}
+
+.form-actions .hint {
+  font-size: 0.7rem;
+  color: var(--muted);
+  transition: color 0.35s var(--ease);
+}
+
+.form-actions .hint kbd {
+  display: inline-block;
+  padding: 1px 5px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  background: var(--kbd-bg);
+  transition: background 0.35s var(--ease), border-color 0.35s var(--ease);
+}
+
+/* ---- 按钮 ---- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 16px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s var(--ease);
+  white-space: nowrap;
+}
+.btn:active { transform: scale(0.97); }
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+}
+.btn-primary:hover { background: var(--accent-hov); }
+.btn-primary:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border);
+}
+.btn-ghost:hover { color: var(--fg); border-color: var(--hover-border); }
+
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+}
+.btn-danger:hover { background: var(--danger-hov); }
+
+.btn-sm { padding: 4px 10px; font-size: 0.74rem; }
+.btn-xs { padding: 2px 7px; font-size: 0.7rem; border-radius: 3px; }
+
+/* ---- 记录表 ---- */
+
+.records-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: background 0.35s var(--ease), border-color 0.35s var(--ease);
+}
+
+.records-card-header {
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  transition: border-color 0.35s var(--ease);
+}
+
+.records-card-header h3 {
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+}
+
+.records-card-header .header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 紧凑筛选栏 */
+.filter-strip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  font-size: 0.78rem;
+  transition: border-color 0.35s var(--ease);
+}
+
+.filter-strip label {
+  font-size: 0.7rem;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  transition: color 0.35s var(--ease);
+}
+
+.filter-strip input,
+.filter-strip select {
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.76rem;
+  color: var(--fg);
+  background: var(--bg);
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s, background 0.35s var(--ease), color 0.35s var(--ease);
+}
+.filter-strip input:focus,
+.filter-strip select:focus { border-color: var(--accent); }
+
+.filter-strip input[type="date"] {
+  width: 128px;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.72rem;
+}
+
+.filter-strip .filter-sep {
+  color: var(--muted);
+  padding: 0 1px;
+  transition: color 0.35s var(--ease);
+}
+
+.filter-strip .f-input { width: 110px; }
+
+.filter-strip .filler {
+  flex: 1;
+  min-width: 4px;
+}
+
+.filter-strip .count-badge {
+  font-size: 0.7rem;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  transition: color 0.35s var(--ease);
+}
+
+/* 表格区域 */
+.table-wrap {
+  overflow-x: auto;
+  max-height: 500px;
+  overflow-y: auto;
+}
+
+.table-wrap table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+thead th {
+  padding: 8px 12px;
+  text-align: left;
+  font-weight: 500;
+  font-size: 0.7rem;
+  color: var(--muted);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+  background: var(--thead-bg);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  white-space: nowrap;
+  transition: background 0.35s var(--ease), color 0.35s var(--ease), border-color 0.35s var(--ease);
+}
+
+tbody td {
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--td-border);
+  white-space: nowrap;
+  transition: background 0.1s, border-color 0.35s var(--ease);
+}
+
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover td { background: var(--row-hover); }
+
+tbody td.actions { text-align: right; }
+
+/* 班次徽章 */
+.badge {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+.badge.day { background: var(--badge-day-bg); color: var(--warn); }
+.badge.night { background: var(--badge-night-bg); color: var(--accent); }
+
+/* 空/加载状态 */
+.table-empty, .table-loading {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--muted);
+  font-size: 0.82rem;
+  transition: color 0.35s var(--ease);
+}
+
+.table-empty svg { opacity: 0.3; margin-bottom: 8px; }
+
+/* ---- 弹窗 ---- */
+
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: var(--modal-overlay);
+  z-index: 100;
+  display: none;
+  place-items: center;
+  backdrop-filter: blur(4px);
+  transition: background 0.35s var(--ease);
+}
+.modal-overlay.active { display: grid; }
+
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  width: 500px;
+  max-width: calc(100vw - 40px);
+  max-height: calc(100vh - 60px);
+  overflow-y: auto;
+  transition: background 0.35s var(--ease), border-color 0.35s var(--ease);
+}
+
+.modal-header {
+  padding: 16px 20px 12px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: border-color 0.35s var(--ease);
+}
+
+.modal-header h3 { font-size: 0.9rem; font-weight: 600; }
+
+.modal-close {
+  width: 28px; height: 28px;
+  border: none; background: transparent;
+  color: var(--muted); cursor: pointer;
+  border-radius: 50%; display: grid; place-items: center;
+  font-size: 1.1rem; transition: background 0.15s, color 0.35s var(--ease);
+}
+.modal-close:hover { background: var(--surface-2); color: var(--fg); }
+
+.modal-body { padding: 16px 20px; }
+.modal-body .form-row { margin-bottom: 10px; }
+
+.modal-footer {
+  padding: 12px 20px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  transition: border-color 0.35s var(--ease);
+}
+
+/* 确认框 */
+.confirm-box {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 28px 32px 24px;
+  width: 360px;
+  max-width: calc(100vw - 40px);
+  text-align: center;
+  transition: background 0.35s var(--ease), border-color 0.35s var(--ease);
+}
+
+.confirm-box h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+  font-family: var(--font-display);
+}
+
+.confirm-box p {
+  font-size: 0.84rem;
+  color: var(--muted);
+  margin-bottom: 20px;
+  line-height: 1.5;
+  transition: color 0.35s var(--ease);
+}
+
+.confirm-box .btn-group {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+/* ---- Toast ---- */
+
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.toast {
+  padding: 10px 18px;
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: #fff;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+  animation: slideIn 0.25s var(--ease);
+}
+
+.toast.success { background: var(--success); }
+.toast.error { background: var(--danger); }
+.toast.warn { background: var(--warn); }
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* ---- 响应式 ---- */
+
+@media (max-width: 900px) {
+  .stats-row { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 600px) {
+  .stats-row { grid-template-columns: 1fr; }
+  .page { padding: 0 12px 24px; }
+  .filter-strip input[type="date"] { width: 110px; }
+}
+
+/* 行内工具 */
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.text-muted { color: var(--muted); }
+</style>
 </head>
 <body>
 
-  <!-- 顶部导航 -->
-  <nav class="navbar">
-    <h1>加班登记系统</h1>
-  </nav>
+<div class="page">
 
-  <div class="container">
+  <!-- ========== 顶部栏 ========== -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.8">
+        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+        <line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/>
+        <line x1="3" y1="10" x2="21" y2="10"/>
+        <path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/>
+      </svg>
+      <h1>加班登记系统</h1>
+    </div>
+    <div class="topbar-right">
+      <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="切换主题" aria-pressed="false">
+        <span class="icon" id="themeIcon">☀️</span>
+        <span id="themeLabel">日光</span>
+      </button>
+      <span class="time" id="clockDisplay">--:--:--</span>
+    </div>
+  </header>
 
-    <!-- 登记表单 -->
-    <div class="card">
-      <div class="card-header">
-        <h2>加班登记</h2>
-        <div class="btn-group">
-          <button class="btn btn-outline btn-sm" onclick="resetForm()">重置表单</button>
-          <button type="submit" class="btn btn-primary btn-sm" id="submitBtn" form="overtimeForm">提交登记</button>
+  <!-- ========== 统计行 ========== -->
+  <div class="stats-row">
+    <div class="stat-item">
+      <div class="stat-l">
+        <span class="stat-label">本周加班人次</span>
+        <span class="stat-value accent" id="statWeeklyCount">--</span>
+      </div>
+      <div class="stat-r">本周</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-l">
+        <span class="stat-label">本月总时长</span>
+        <span class="stat-value" id="statMonthlyHours">--</span>
+      </div>
+      <div class="stat-r">本月</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-l">
+        <span class="stat-label">待审批记录</span>
+        <span class="stat-value warn" id="statPending">--</span>
+      </div>
+      <div class="stat-r">待审批</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-l">
+        <span class="stat-label">记录总数</span>
+        <span class="stat-value success" id="statTotal">--</span>
+      </div>
+      <div class="stat-r">累计</div>
+    </div>
+  </div>
+
+  <!-- ========== 主内容：表单 + 记录 ========== -->
+  <div class="content-grid">
+
+    <!-- 左栏：登记表单 -->
+    <div class="form-card">
+      <div class="form-card-header">
+        <h3>新加班登记</h3>
+        <span class="text-muted" style="font-size:0.7rem;">带 <span style="color:var(--danger)">*</span> 为必填</span>
+      </div>
+
+      <div class="presets" style="padding:12px 18px 0;">
+        <button class="preset-btn active" data-preset="day" onclick="setPreset('day',this)">早班段 08:00–17:30</button>
+        <button class="preset-btn" data-preset="night" onclick="setPreset('night',this)">晚班段 09:00–19:00</button>
+      </div>
+
+      <div class="form-card-body">
+        <div class="form-row">
+          <div class="form-field">
+            <label>姓名 <span class="req">*</span></label>
+            <input type="text" id="f_name" placeholder="输入姓名">
+          </div>
+          <div class="form-field">
+            <label>工号 <span class="req">*</span></label>
+            <input type="text" id="f_emp_id" placeholder="输入工号">
+          </div>
+        </div>
+        <div class="form-row full">
+          <div class="form-field">
+            <label>公司 <span class="req">*</span></label>
+            <input type="text" id="f_company" placeholder="输入公司名称">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label>PM <span class="req">*</span></label>
+            <input type="text" id="f_pm" placeholder="PM 姓名">
+          </div>
+          <div class="form-field">
+            <label>项目组 <span class="req">*</span></label>
+            <input type="text" id="f_project" placeholder="输入项目组">
+          </div>
+        </div>
+        <div class="form-row third">
+          <div class="form-field">
+            <label>日期 <span class="req">*</span></label>
+            <input type="date" id="f_date">
+          </div>
+          <div class="form-field">
+            <label>开始 <span class="req">*</span></label>
+            <input type="time" id="f_start" step="60">
+          </div>
+          <div class="form-field">
+            <label>结束 <span class="req">*</span></label>
+            <input type="time" id="f_end" step="60">
+            <span class="error-text" id="f_time_error" role="alert">结束时间必须晚于开始时间</span>
+          </div>
+        </div>
+        <div class="form-row full" style="margin-top:10px;">
+          <div class="form-field">
+            <label>加班事由 <span class="req">*</span></label>
+            <textarea id="f_reason" placeholder="请填写加班事由…" rows="2"></textarea>
+          </div>
         </div>
       </div>
-      <div class="card-body">
-        <form id="overtimeForm" class="form-grid">
-          <div class="form-group">
-            <label>加班人员 <span class="required">*</span></label>
-            <input type="text" id="employee_name" name="employee_name" placeholder="请输入姓名" required>
-            <span class="error-text" id="err_employee_name"></span>
-          </div>
-          <div class="form-group">
-            <label>工号 <span class="required">*</span></label>
-            <input type="text" id="employee_id" name="employee_id" placeholder="请输入工号" required>
-            <span class="error-text" id="err_employee_id"></span>
-          </div>
-          <div class="form-group">
-            <label>合作公司 <span class="required">*</span></label>
-            <input type="text" id="company" name="company" placeholder="请输入合作公司" required>
-            <span class="error-text" id="err_company"></span>
-          </div>
-          <div class="form-group">
-            <label>项目组 <span class="required">*</span></label>
-            <input type="text" id="project_team" name="project_team" placeholder="请输入项目组" required>
-            <span class="error-text" id="err_project_team"></span>
-          </div>
-          <div class="form-group">
-            <label>PM <span class="required">*</span></label>
-            <input type="text" id="pm" name="pm" placeholder="请输入项目经理" required>
-            <span class="error-text" id="err_pm"></span>
-          </div>
-          <div class="form-group">
-            <label>计划加班日期 <span class="required">*</span></label>
-            <input type="date" id="overtime_date" name="overtime_date" required>
-            <span class="error-text" id="err_overtime_date"></span>
-          </div>
-          <div class="form-group">
-            <label>计划开始时间 <span class="required">*</span></label>
-            <input type="text" id="start_time" name="start_time" placeholder="yyyy-mm-dd hh24:mi:ss" required>
-            <span class="error-text" id="err_start_time"></span>
-          </div>
-          <div class="form-group">
-            <label>计划结束时间 <span class="required">*</span></label>
-            <input type="text" id="end_time" name="end_time" placeholder="yyyy-mm-dd hh24:mi:ss" required>
-            <span class="error-text" id="err_end_time"></span>
-          </div>
-          <div class="form-group">
-            <label>时段预设</label>
-            <div class="preset-group">
-              <button type="button" class="btn preset-btn active" data-preset="day" onclick="setTimePreset('day', this)">早班段 8:00~17:30</button>
-              <button type="button" class="btn preset-btn" data-preset="night" onclick="setTimePreset('night', this)">晚班段 9:00~19:00</button>
-            </div>
-          </div>
-          <div class="form-group full-width">
-            <label>加班事由 <span class="required">*</span></label>
-            <textarea id="reason" name="reason" placeholder="请输入加班事由" required></textarea>
-            <span class="error-text" id="err_reason"></span>
-          </div>
-        </form>
+
+      <div class="form-actions">
+        <span class="hint">快捷键 <kbd>Enter</kbd> 提交 · <kbd>Esc</kbd> 清空</span>
+        <button class="btn btn-primary" id="submitBtn" onclick="submitRecord()">提交登记</button>
       </div>
     </div>
 
-    <!-- 记录列表 -->
-    <div class="card">
-      <div class="card-header">
-        <h2>加班记录列表</h2>
-        <div class="btn-group">
-          <button class="btn btn-success btn-sm" onclick="exportExcel()">导出 Excel</button>
+    <!-- 右栏：记录列表 -->
+    <div class="records-card">
+      <div class="records-card-header">
+        <h3>加班记录</h3>
+        <div class="header-actions">
+          <button class="btn btn-ghost btn-sm" onclick="exportRecords()">导出 Excel</button>
+          <button class="btn btn-ghost btn-sm" onclick="resetFilters()">重置筛选</button>
+          <button class="btn btn-ghost btn-sm" onclick="refreshDashboard()">刷新</button>
         </div>
       </div>
-      <!-- 筛选栏 -->
-      <div class="card-body" style="padding-bottom: 0.75rem;">
-        <div class="filter-bar">
-          <div class="filter-date-range">
-            <input type="date" id="filter_date_from">
-            <span class="filter-date-sep">~</span>
-            <input type="date" id="filter_date_to">
-          </div>
-          <input type="text" id="filter_company" class="filter-input" placeholder="合作公司">
-          <input type="text" id="filter_project_team" class="filter-input" placeholder="项目组">
-          <input type="text" id="filter_employee_id" class="filter-input" placeholder="工号">
-          <input type="text" id="filter_employee_name" class="filter-input" placeholder="姓名">
-          <div class="btn-group">
-            <button class="btn btn-primary btn-sm" onclick="loadRecords(1)">查询</button>
-            <button class="btn btn-outline btn-sm" onclick="resetFilters()">重置</button>
-          </div>
-        </div>
+
+      <div class="filter-strip">
+        <label>日期</label>
+        <input type="date" id="filt_date_from">
+        <span class="filter-sep">—</span>
+        <input type="date" id="filt_date_to">
+        <label>公司</label>
+        <input class="f-input" id="filt_company" placeholder="公司">
+        <label>项目组</label>
+        <input class="f-input" id="filt_project" placeholder="项目组">
+        <label>工号</label>
+        <input class="f-input" id="filt_emp_id" placeholder="工号" style="width:90px;">
+        <label>姓名</label>
+        <input class="f-input" id="filt_name" placeholder="姓名" style="width:90px;">
+        <div class="filler"></div>
+        <span class="count-badge" id="recordCount">共 0 条</span>
       </div>
-      <!-- 表格区域 -->
+
       <div class="table-wrap">
         <table>
           <thead>
             <tr>
-              <th>序号</th>
-              <th>加班人员</th>
+              <th>#</th>
+              <th>人员</th>
               <th>工号</th>
-              <th>合作公司</th>
+              <th>公司</th>
               <th>项目组</th>
               <th>PM</th>
-              <th>加班事由</th>
+              <th>事由</th>
               <th>加班日期</th>
-              <th>开始时间</th>
-              <th>结束时间</th>
+              <th>开始</th>
+              <th>结束</th>
+              <th>班次</th>
               <th>登记时间</th>
               <th>操作</th>
             </tr>
           </thead>
           <tbody id="recordsBody">
-            <tr>
-              <td colspan="12" class="empty-state">
-                <div class="loading">加载中...</div>
-              </td>
-            </tr>
+            <tr><td colspan="13" class="table-loading">加载中…</td></tr>
           </tbody>
         </table>
       </div>
-      <!-- 分页 -->
-      <div class="pagination" id="pagination">
-        <div class="page-info">
-          <span>共 <strong id="totalCount">0</strong> 条记录</span>
+    </div>
+  </div>
+</div>
+
+<!-- ========== 编辑弹窗 ========== -->
+<div class="modal-overlay" id="editModal" role="dialog" aria-modal="true" aria-labelledby="editTitle">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="editTitle">编辑加班记录</h3>
+      <button class="modal-close" onclick="closeEditModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit_id">
+      <div class="presets" style="margin-bottom:12px;">
+        <button class="preset-btn active" data-preset="day" onclick="setEditPreset('day',this)">早班段 08:00–17:30</button>
+        <button class="preset-btn" data-preset="night" onclick="setEditPreset('night',this)">晚班段 09:00–19:00</button>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label>姓名 <span class="req">*</span></label>
+          <input type="text" id="edit_employee_name">
         </div>
-        <div class="page-nav">
-          <select id="pagination_page_size" onchange="loadRecords(1)">
-            <option value="15">15</option>
-            <option value="30">30</option>
-            <option value="50" selected>50</option>
-            <option value="100">100</option>
-          </select>
-          <div class="page-btns" id="pageBtns"></div>
+        <div class="form-field">
+          <label>工号 <span class="req">*</span></label>
+          <input type="text" id="edit_employee_id">
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="form-field">
+          <label>公司 <span class="req">*</span></label>
+          <input type="text" id="edit_company">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-field">
+          <label>PM <span class="req">*</span></label>
+          <input type="text" id="edit_pm">
+        </div>
+        <div class="form-field">
+          <label>项目组 <span class="req">*</span></label>
+          <input type="text" id="edit_project_team">
+        </div>
+      </div>
+      <div class="form-row third">
+        <div class="form-field">
+          <label>日期 <span class="req">*</span></label>
+          <input type="date" id="edit_overtime_date">
+        </div>
+        <div class="form-field">
+          <label>开始 <span class="req">*</span></label>
+          <input type="time" id="edit_start_time" step="60">
+        </div>
+        <div class="form-field">
+          <label>结束 <span class="req">*</span></label>
+          <input type="time" id="edit_end_time" step="60">
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="form-field">
+          <label>加班事由 <span class="req">*</span></label>
+          <textarea id="edit_reason" rows="2"></textarea>
         </div>
       </div>
     </div>
-
-  </div>
-
-  <!-- 编辑弹窗 -->
-  <div class="modal-overlay" id="editModal">
-    <div class="modal">
-      <div class="modal-header">
-        <h3>编辑加班记录</h3>
-        <button class="modal-close" onclick="closeModal()">&times;</button>
-      </div>
-      <div class="modal-body">
-        <form id="editForm" class="form-grid">
-          <input type="hidden" id="edit_id">
-          <div class="form-group">
-            <label>加班人员 <span class="required">*</span></label>
-            <input type="text" id="edit_employee_name" required>
-          </div>
-          <div class="form-group">
-            <label>工号 <span class="required">*</span></label>
-            <input type="text" id="edit_employee_id" required>
-          </div>
-          <div class="form-group">
-            <label>合作公司 <span class="required">*</span></label>
-            <input type="text" id="edit_company" required>
-          </div>
-          <div class="form-group">
-            <label>项目组 <span class="required">*</span></label>
-            <input type="text" id="edit_project_team" required>
-          </div>
-          <div class="form-group">
-            <label>PM <span class="required">*</span></label>
-            <input type="text" id="edit_pm" required>
-          </div>
-          <div class="form-group">
-            <label>计划加班日期 <span class="required">*</span></label>
-            <input type="date" id="edit_overtime_date" required>
-          </div>
-          <div class="form-group">
-            <label>计划开始时间 <span class="required">*</span></label>
-            <input type="text" id="edit_start_time" required>
-          </div>
-          <div class="form-group">
-            <label>计划结束时间 <span class="required">*</span></label>
-            <input type="text" id="edit_end_time" required>
-          </div>
-          <div class="form-group">
-            <label>时段预设</label>
-            <div class="preset-group">
-              <button type="button" class="btn preset-btn active" data-preset="day" onclick="setEditTimePreset('day', this)">早班段 8:00~17:30</button>
-              <button type="button" class="btn preset-btn" data-preset="night" onclick="setEditTimePreset('night', this)">晚班段 9:00~19:00</button>
-            </div>
-          </div>
-          <div class="form-group full-width">
-            <label>加班事由 <span class="required">*</span></label>
-            <textarea id="edit_reason" required></textarea>
-          </div>
-        </form>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-outline" onclick="closeModal()">取消</button>
-        <button class="btn btn-primary" onclick="saveEdit()">保存</button>
-      </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeEditModal()">取消</button>
+      <button class="btn btn-primary" onclick="saveEdit()">保存修改</button>
     </div>
   </div>
+</div>
 
-  <!-- 消息提示 -->
-  <div class="toast" id="toast"></div>
+<!-- ========== 删除确认 ========== -->
+<div class="modal-overlay" id="confirmOverlay" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle">
+  <div class="confirm-box">
+    <h4>确认删除</h4>
+    <p id="confirmTitle">确定要删除这条加班记录吗？此操作不可恢复。</p>
+    <div class="btn-group">
+      <button class="btn btn-ghost" onclick="closeConfirm()">取消</button>
+      <button class="btn btn-danger" onclick="confirmDelete()">删除</button>
+    </div>
+  </div>
+</div>
 
-  <script src="js/app.js"></script>
+<!-- ========== Toast 容器 ========== -->
+<div class="toast-container" id="toastContainer" role="alert" aria-live="polite"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  // ===== 工具 =====
+
+  function pad2(n) { return (n < 10 ? '0' : '') + n; }
+
+  function getNearestSaturday() {
+    var d = new Date();
+    var day = d.getDay();
+    var diff = day === 0 ? -6 : (6 - day);
+    d.setDate(d.getDate() + diff);
+    return d.toISOString().slice(0, 10);
+  }
+
+  function getWeekMonday() {
+    var d = new Date();
+    var day = d.getDay();
+    var diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    d.setDate(diff);
+    return d.toISOString().slice(0, 10);
+  }
+
+  function getWeekSunday() {
+    var d = new Date();
+    var day = d.getDay();
+    var diff = d.getDate() + (day === 0 ? 0 : 7 - day);
+    d.setDate(diff);
+    return d.toISOString().slice(0, 10);
+  }
+
+  function escapeHtml(s) {
+    if (!s) return '';
+    var d = document.createElement('div');
+    d.textContent = s;
+    return d.innerHTML;
+  }
+
+  function truncate(s, n) {
+    if (!s) return '';
+    return s.length > n ? s.slice(0, n) + '…' : s;
+  }
+
+  var TIME_PRESETS = {
+    day:   { start: '08:00', end: '17:30', label: '早班段' },
+    night: { start: '09:00', end: '19:00', label: '晚班段' },
+  };
+
+  // ===== 主题切换 =====
+
+  var THEME_STORAGE_KEY = 'overtime-theme';
+
+  window.toggleTheme = function () {
+    var html = document.documentElement;
+    var current = html.getAttribute('data-theme');
+    var next = current === 'sunlight' ? 'moonlight' : 'sunlight';
+    html.setAttribute('data-theme', next);
+    updateThemeUI(next);
+    try { localStorage.setItem(THEME_STORAGE_KEY, next); } catch (_) {}
+  };
+
+  function updateThemeUI(theme) {
+    var icon = document.getElementById('themeIcon');
+    var label = document.getElementById('themeLabel');
+    var btn = document.getElementById('themeToggle');
+    var pressed = theme === 'moonlight';
+    if (btn) { btn.setAttribute('aria-pressed', pressed); btn.title = pressed ? '切换为日光主题' : '切换为月光主题'; }
+    if (theme === 'moonlight') {
+      icon.textContent = '🌙';
+      label.textContent = '月光';
+    } else {
+      icon.textContent = '☀️';
+      label.textContent = '日光';
+    }
+  }
+
+  // 恢复持久化主题
+  (function initTheme() {
+    try {
+      var saved = localStorage.getItem(THEME_STORAGE_KEY);
+      if (saved === 'sunlight' || saved === 'moonlight') {
+        document.documentElement.setAttribute('data-theme', saved);
+        updateThemeUI(saved);
+        return;
+      }
+    } catch (_) {}
+    // 默认日光黄
+    document.documentElement.setAttribute('data-theme', 'sunlight');
+    updateThemeUI('sunlight');
+  })();
+
+  // ===== 实时时钟 =====
+
+  function updateClock() {
+    var now = new Date();
+    document.getElementById('clockDisplay').textContent =
+      now.getFullYear() + '-' + pad2(now.getMonth()+1) + '-' + pad2(now.getDate()) + '  '
+      + pad2(now.getHours()) + ':' + pad2(now.getMinutes()) + ':' + pad2(now.getSeconds());
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  // ===== Toast =====
+
+  window.showToast = function (msg, type) {
+    type = type || 'success';
+    var c = document.getElementById('toastContainer');
+    var el = document.createElement('div');
+    el.className = 'toast ' + type;
+    el.textContent = msg;
+    c.appendChild(el);
+    setTimeout(function () { el.style.opacity = '0'; el.style.transition = 'opacity 0.3s'; }, 2800);
+    setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 3200);
+  };
+
+  // ===== 统计数据 =====
+
+  window.refreshDashboard = function () {
+    fetch('/api/stats')
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        document.getElementById('statWeeklyCount').textContent = (data.weekly_count || '--') + ' 人';
+        document.getElementById('statMonthlyHours').textContent = (data.monthly_hours || '--') + ' h';
+        document.getElementById('statPending').textContent = (data.pending_count || '--') + ' 条';
+        document.getElementById('statTotal').textContent = (data.total_count || '--') + ' 条';
+      })
+      .catch(function () { /* offline — keep dashes */ });
+  };
+
+  // ===== 自动关联 =====
+
+  var autoFillTimer = null;
+  var isAutoFilling = false;
+
+  function triggerAutoFill() {
+    if (isAutoFilling) return;
+    clearTimeout(autoFillTimer);
+    autoFillTimer = setTimeout(function () {
+      var name = document.getElementById('f_name').value.trim();
+      var empId = document.getElementById('f_emp_id').value.trim();
+      if (!name && !empId) return;
+
+      var params = '';
+      if (name) params += 'name=' + encodeURIComponent(name);
+      if (empId) params += (params ? '&' : '') + 'employee_id=' + encodeURIComponent(empId);
+
+      fetch('/api/auto-fill?' + params)
+        .then(function (r) { return r.json(); })
+        .then(function (result) {
+          if (result.match && result.data) {
+            isAutoFilling = true;
+            var d = result.data;
+            if (empId && d.employee_name) document.getElementById('f_name').value = d.employee_name;
+            if (!empId && name && d.employee_id) document.getElementById('f_emp_id').value = d.employee_id;
+            document.getElementById('f_company').value = d.company || '';
+            document.getElementById('f_project').value = d.project_team || '';
+            document.getElementById('f_pm').value = d.pm || '';
+            isAutoFilling = false;
+          } else if (result.multiple) {
+            showToast('找到多条同名记录，请输入工号进行精确匹配', 'warn');
+          }
+        })
+        .catch(function () {});
+    }, 400);
+  }
+
+  document.getElementById('f_name').addEventListener('input', triggerAutoFill);
+  document.getElementById('f_emp_id').addEventListener('input', triggerAutoFill);
+
+  // ===== 表单预设 =====
+
+  window.setPreset = function (key, btn) {
+    document.querySelectorAll('.form-card .preset-btn').forEach(function (b) { b.classList.remove('active'); });
+    if (btn) btn.classList.add('active');
+    var t = TIME_PRESETS[key];
+    if (t) {
+      document.getElementById('f_start').value = t.start;
+      document.getElementById('f_end').value = t.end;
+    }
+  };
+
+  function buildDateTime(dateEl, timeEl) {
+    var date = dateEl.value;
+    var time = timeEl.value;
+    if (!date || !time) return '';
+    return date + ' ' + time + ':00';
+  }
+
+  // ===== 提交登记 =====
+
+  window.submitRecord = function () {
+    var fields = {
+      employee_name:  document.getElementById('f_name'),
+      employee_id:    document.getElementById('f_emp_id'),
+      company:        document.getElementById('f_company'),
+      project_team:   document.getElementById('f_project'),
+      pm:             document.getElementById('f_pm'),
+      overtime_date:  document.getElementById('f_date'),
+      start_time:     document.getElementById('f_start'),
+      end_time:       document.getElementById('f_end'),
+      reason:         document.getElementById('f_reason'),
+    };
+
+    var ok = true;
+    var errorText = document.getElementById('f_time_error');
+    Object.keys(fields).forEach(function (k) {
+      var el = fields[k];
+      el.classList.remove('error');
+      if (!el.value.trim()) { el.classList.add('error'); ok = false; }
+    });
+    if (!ok) { showToast('请填写所有必填字段', 'error'); return; }
+
+    if (fields.end_time.value <= fields.start_time.value) {
+      errorText.classList.add('show');
+      fields.end_time.classList.add('error');
+      showToast('结束时间必须晚于开始时间', 'error');
+      return;
+    }
+    errorText.classList.remove('show');
+
+    var data = {};
+    Object.keys(fields).forEach(function (k) { data[k] = fields[k].value.trim(); });
+    // type="time" 转完整 datetime 格式
+    data.start_time = buildDateTime(fields.overtime_date, fields.start_time);
+    data.end_time = buildDateTime(fields.overtime_date, fields.end_time);
+
+    var btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = '提交中…';
+
+    fetch('/api/records', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (result) {
+        btn.disabled = false;
+        btn.textContent = '提交登记';
+        if (result.error) { showToast(result.error, 'error'); return; }
+        showToast('登记成功！', 'success');
+        // 清空表单
+        Object.keys(fields).forEach(function (k) { fields[k].value = ''; });
+        fields.overtime_date.value = getNearestSaturday();
+        window.setPreset('day', document.querySelector('.form-card .preset-btn[data-preset="day"]'));
+        refreshDashboard();
+        loadRecords();
+      })
+      .catch(function () {
+        btn.disabled = false;
+        btn.textContent = '提交登记';
+        showToast('无法连接服务器，请检查网络', 'error');
+      });
+  };
+
+  // ===== 快捷键 =====
+
+  document.addEventListener('keydown', function (e) {
+    // Enter 提交（表单内）
+    if (e.key === 'Enter' && e.target && e.target.closest('.form-card-body')) {
+      e.preventDefault();
+      window.submitRecord();
+    }
+    // Esc 清空表单（表单内）
+    if (e.key === 'Escape' && e.target && e.target.closest('.form-card')) {
+      document.querySelectorAll('.form-card input, .form-card textarea').forEach(function (el) {
+        el.value = '';
+        el.classList.remove('error');
+      });
+      document.getElementById('f_date').value = getNearestSaturday();
+      window.setPreset('day', document.querySelector('.form-card .preset-btn[data-preset="day"]'));
+    }
+    // Esc 关闭弹窗
+    if (e.key === 'Escape') {
+      closeEditModal();
+      closeConfirm();
+    }
+  });
+
+  // ===== 记录列表（无分页） =====
+
+  window.loadRecords = function () {
+    var dateFrom = document.getElementById('filt_date_from').value;
+    var dateTo = document.getElementById('filt_date_to').value;
+    var company = document.getElementById('filt_company').value.trim();
+    var projectTeam = document.getElementById('filt_project').value.trim();
+    var empId = document.getElementById('filt_emp_id').value.trim();
+    var empName = document.getElementById('filt_name').value.trim();
+
+    var params = 'page=1&page_size=200';
+    if (dateFrom) params += '&date_from=' + encodeURIComponent(dateFrom);
+    if (dateTo)   params += '&date_to=' + encodeURIComponent(dateTo);
+    if (company)  params += '&company=' + encodeURIComponent(company);
+    if (projectTeam) params += '&project_team=' + encodeURIComponent(projectTeam);
+    if (empId)    params += '&employee_id=' + encodeURIComponent(empId);
+    if (empName)  params += '&employee_name=' + encodeURIComponent(empName);
+
+    var tbody = document.getElementById('recordsBody');
+    tbody.innerHTML = '<tr><td colspan="13" class="table-loading">加载中…</td></tr>';
+
+    fetch('/api/records?' + params)
+      .then(function (r) { return r.json(); })
+      .then(function (result) { renderRecords(result); })
+      .catch(function () {
+        tbody.innerHTML = '<tr><td colspan="13" class="table-loading">无法连接服务器</td></tr>';
+      });
+  };
+
+  function renderRecords(result) {
+    var tbody = document.getElementById('recordsBody');
+    var records = result.records || [];
+    document.getElementById('recordCount').textContent = '共 ' + (result.total || 0) + ' 条';
+
+    if (records.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="13" class="table-empty">'
+        + '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>'
+        + '<br>暂无加班记录</td></tr>';
+      return;
+    }
+
+    var html = '';
+    records.forEach(function (r, idx) {
+      var seq = (result.total || 0) - idx;
+      var shift = detectShift(r.start_time, r.end_time);
+      var shiftLabel = shift === 'day' ? '早班' : '晚班';
+      var shiftClass = shift === 'day' ? 'day' : 'night';
+      html += '<tr>'
+        + '<td class="mono" style="font-size:0.74rem;color:var(--muted)">' + seq + '</td>'
+        + '<td><strong>' + escapeHtml(r.employee_name) + '</strong></td>'
+        + '<td class="mono" style="font-size:0.76rem;color:var(--muted)">' + escapeHtml(r.employee_id) + '</td>'
+        + '<td>' + escapeHtml(r.company) + '</td>'
+        + '<td>' + escapeHtml(r.project_team) + '</td>'
+        + '<td>' + escapeHtml(r.pm) + '</td>'
+        + '<td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;" title="' + escapeHtml(r.reason) + '">' + truncate(escapeHtml(r.reason), 14) + '</td>'
+        + '<td class="mono" style="font-size:0.76rem;">' + escapeHtml(r.overtime_date) + '</td>'
+        + '<td class="mono" style="font-size:0.76rem;">' + escapeHtml(r.start_time.slice(-8)) + '</td>'
+        + '<td class="mono" style="font-size:0.76rem;">' + escapeHtml(r.end_time.slice(-8)) + '</td>'
+        + '<td><span class="badge ' + shiftClass + '">' + shiftLabel + '</span></td>'
+        + '<td class="mono" style="font-size:0.7rem;color:var(--muted)">' + escapeHtml(r.created_at) + '</td>'
+        + '<td class="actions">'
+        + '<button class="btn btn-ghost btn-xs" onclick="openEdit(' + r.id + ')">编辑</button> '
+        + '<button class="btn btn-danger btn-xs" onclick="openDelete(' + r.id + ')">删除</button>'
+        + '</td></tr>';
+    });
+    tbody.innerHTML = html;
+  }
+
+  function detectShift(st, et) {
+    if (!st || !et) return 'day';
+    var sh = parseInt(st.slice(-8, -6), 10);
+    return (sh >= 8 && sh < 10) ? 'day' : 'night';
+  }
+
+  // ===== 筛选 =====
+
+  window.resetFilters = function () {
+    document.getElementById('filt_date_from').value = getWeekMonday();
+    document.getElementById('filt_date_to').value   = getWeekSunday();
+    document.getElementById('filt_company').value   = '';
+    document.getElementById('filt_project').value   = '';
+    document.getElementById('filt_emp_id').value     = '';
+    document.getElementById('filt_name').value       = '';
+    loadRecords();
+  };
+
+  window.exportRecords = function () {
+    var dateFrom = document.getElementById('filt_date_from').value;
+    var dateTo   = document.getElementById('filt_date_to').value;
+    var company  = document.getElementById('filt_company').value.trim();
+    var projectTeam = document.getElementById('filt_project').value.trim();
+    var empId    = document.getElementById('filt_emp_id').value.trim();
+    var empName  = document.getElementById('filt_name').value.trim();
+
+    var params = '';
+    if (dateFrom)    params += '&date_from=' + encodeURIComponent(dateFrom);
+    if (dateTo)      params += '&date_to=' + encodeURIComponent(dateTo);
+    if (company)     params += '&company=' + encodeURIComponent(company);
+    if (projectTeam) params += '&project_team=' + encodeURIComponent(projectTeam);
+    if (empId)       params += '&employee_id=' + encodeURIComponent(empId);
+    if (empName)     params += '&employee_name=' + encodeURIComponent(empName);
+
+    var url = params ? '/api/records/export?' + params.substring(1) : '/api/records/export';
+    showToast('正在导出…', 'success');
+    window.location.href = url;
+  };
+
+  // 筛选变更自动刷新
+  document.querySelectorAll('.filter-strip input').forEach(function (el) {
+    el.addEventListener('change', function () { loadRecords(); });
+  });
+
+  // ===== 编辑 =====
+
+  window.openEdit = function (id) {
+    fetch('/api/records/' + id)
+      .then(function (r) { return r.json(); })
+      .then(function (result) {
+        if (result.error) { showToast(result.error, 'error'); return; }
+        document.getElementById('edit_id').value             = result.id;
+        document.getElementById('edit_employee_name').value  = result.employee_name;
+        document.getElementById('edit_employee_id').value    = result.employee_id;
+        document.getElementById('edit_company').value        = result.company;
+        document.getElementById('edit_project_team').value   = result.project_team;
+        document.getElementById('edit_pm').value              = result.pm;
+        document.getElementById('edit_reason').value          = result.reason;
+        document.getElementById('edit_overtime_date').value   = result.overtime_date;
+        // type="time" 只取时间部分
+        document.getElementById('edit_start_time').value      = result.start_time.slice(-8, -3);
+        document.getElementById('edit_end_time').value        = result.end_time.slice(-8, -3);
+
+        var shift = detectShift(result.start_time, result.end_time);
+        document.querySelectorAll('#editModal .preset-btn').forEach(function (b) { b.classList.remove('active'); });
+        var presetBtn = document.querySelector('#editModal .preset-btn[data-preset="' + shift + '"]');
+        if (presetBtn) presetBtn.classList.add('active');
+
+        document.getElementById('editModal').classList.add('active');
+      })
+      .catch(function () { showToast('加载记录失败', 'error'); });
+  };
+
+  window.closeEditModal = function () {
+    document.getElementById('editModal').classList.remove('active');
+  };
+
+  window.setEditPreset = function (key, btn) {
+    document.querySelectorAll('#editModal .preset-btn').forEach(function (b) { b.classList.remove('active'); });
+    if (btn) btn.classList.add('active');
+    var t = TIME_PRESETS[key];
+    if (t) {
+      document.getElementById('edit_start_time').value = t.start;
+      document.getElementById('edit_end_time').value   = t.end;
+    }
+  };
+
+  document.getElementById('edit_overtime_date').addEventListener('change', function () {
+    var date = this.value;
+    if (date) {
+      var active = document.querySelector('#editModal .preset-btn.active');
+      if (active) {
+        var key = active.getAttribute('data-preset');
+        var t = TIME_PRESETS[key];
+        if (t) {
+          document.getElementById('edit_start_time').value = t.start;
+          document.getElementById('edit_end_time').value   = t.end;
+        }
+      }
+    }
+  });
+
+  window.saveEdit = function () {
+    var id = document.getElementById('edit_id').value;
+    var names = ['employee_name', 'employee_id', 'company', 'project_team', 'pm', 'reason', 'overtime_date', 'start_time', 'end_time'];
+    var data = {};
+    var ok = true;
+    names.forEach(function (f) {
+      var el = document.getElementById('edit_' + f);
+      var val = el ? el.value.trim() : '';
+      data[f] = val;
+      if (!val) { showToast('请填写完整信息', 'error'); ok = false; }
+    });
+    if (!ok) return;
+    // type="time" 转完整 datetime
+    var edate = document.getElementById('edit_overtime_date').value;
+    data.start_time = edate + ' ' + data.start_time + ':00';
+    data.end_time = edate + ' ' + data.end_time + ':00';
+    if (data.end_time <= data.start_time) { showToast('结束时间必须晚于开始时间', 'error'); return; }
+
+    fetch('/api/records/' + id, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (result) {
+        if (result.error) { showToast(result.error, 'error'); return; }
+        showToast('更新成功', 'success');
+        closeEditModal();
+        loadRecords();
+      })
+      .catch(function () { showToast('网络错误', 'error'); });
+  };
+
+  // ===== 删除 =====
+
+  var pendingDeleteId = null;
+
+  window.openDelete = function (id) {
+    pendingDeleteId = id;
+    document.getElementById('confirmOverlay').classList.add('active');
+  };
+
+  window.closeConfirm = function () {
+    pendingDeleteId = null;
+    document.getElementById('confirmOverlay').classList.remove('active');
+  };
+
+  window.confirmDelete = function () {
+    if (!pendingDeleteId) return;
+    var id = pendingDeleteId;
+    pendingDeleteId = null;
+    document.getElementById('confirmOverlay').classList.remove('active');
+
+    fetch('/api/records/' + id, { method: 'DELETE' })
+      .then(function (r) { return r.json(); })
+      .then(function (result) {
+        if (result.error) { showToast(result.error, 'error'); return; }
+        showToast('删除成功', 'success');
+        loadRecords();
+        refreshDashboard();
+      })
+      .catch(function () { showToast('网络错误', 'error'); });
+  };
+
+  // ===== 点击外部关闭弹窗 =====
+
+  document.getElementById('editModal').addEventListener('click', function (e) {
+    if (e.target === this) closeEditModal();
+  });
+  document.getElementById('confirmOverlay').addEventListener('click', function (e) {
+    if (e.target === this) closeConfirm();
+  });
+
+  // ===== 初始化 =====
+
+  document.getElementById('f_date').value = getNearestSaturday();
+  window.setPreset('day', document.querySelector('.form-card .preset-btn[data-preset="day"]'));
+  document.getElementById('filt_date_from').value = getWeekMonday();
+  document.getElementById('filt_date_to').value   = getWeekSunday();
+
+  refreshDashboard();
+  loadRecords();
+
+})();
+</script>
 </body>
 </html>
