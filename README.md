@@ -95,3 +95,9 @@ python3 tests/test_e2e.py
 | GET    | `/api/auto-fill`         | 自动关联员工信息 |
 
 查询参数：`date_from` / `date_to` / `company` / `project_team` / `employee_id` / `employee_name` / `page` / `page_size`
+
+## 文档
+
+- [完整指南](docs/system-guide.md) - 用户使用、开发修改、前端设计
+- [表单字段开发](docs/form-fields.md) - 添加/修改字段的 6 层修改流程
+- [测试用例](tests/test_cases.md) - 手工测试用例文档
