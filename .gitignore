@@ -1,0 +1,28 @@
+# --- Runtime ---
+overtime.db
+overtime.db-shm
+overtime.db-wal
+logs/*.log
+
+# --- Environment ---
+.env
+
+# --- Python ---
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# --- Test artifacts ---
+test_e2e_*.db
+test_e2e_*.db-shm
+test_e2e_*.db-wal
+
+# --- IDE ---
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store

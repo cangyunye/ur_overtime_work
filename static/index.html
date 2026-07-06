@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>加班登记系统</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <!-- 顶部导航 -->
+  <nav class="navbar">
+    <h1>加班登记系统</h1>
+  </nav>
+
+  <div class="container">
+
+    <!-- 登记表单 -->
+    <div class="card">
+      <div class="card-header">
+        <h2>加班登记</h2>
+        <div class="btn-group">
+          <button class="btn btn-outline btn-sm" onclick="resetForm()">重置表单</button>
+          <button type="submit" class="btn btn-primary btn-sm" id="submitBtn" form="overtimeForm">提交登记</button>
+        </div>
+      </div>
+      <div class="card-body">
+        <form id="overtimeForm" class="form-grid">
+          <div class="form-group">
+            <label>加班人员 <span class="required">*</span></label>
+            <input type="text" id="employee_name" name="employee_name" placeholder="请输入姓名" required>
+            <span class="error-text" id="err_employee_name"></span>
+          </div>
+          <div class="form-group">
+            <label>工号 <span class="required">*</span></label>
+            <input type="text" id="employee_id" name="employee_id" placeholder="请输入工号" required>
+            <span class="error-text" id="err_employee_id"></span>
+          </div>
+          <div class="form-group">
+            <label>合作公司 <span class="required">*</span></label>
+            <input type="text" id="company" name="company" placeholder="请输入合作公司" required>
+            <span class="error-text" id="err_company"></span>
+          </div>
+          <div class="form-group">
+            <label>项目组 <span class="required">*</span></label>
+            <input type="text" id="project_team" name="project_team" placeholder="请输入项目组" required>
+            <span class="error-text" id="err_project_team"></span>
+          </div>
+          <div class="form-group">
+            <label>PM <span class="required">*</span></label>
+            <input type="text" id="pm" name="pm" placeholder="请输入项目经理" required>
+            <span class="error-text" id="err_pm"></span>
+          </div>
+          <div class="form-group">
+            <label>计划加班日期 <span class="required">*</span></label>
+            <input type="date" id="overtime_date" name="overtime_date" required>
+            <span class="error-text" id="err_overtime_date"></span>
+          </div>
+          <div class="form-group">
+            <label>计划开始时间 <span class="required">*</span></label>
+            <input type="text" id="start_time" name="start_time" placeholder="yyyy-mm-dd hh24:mi:ss" required>
+            <span class="error-text" id="err_start_time"></span>
+          </div>
+          <div class="form-group">
+            <label>计划结束时间 <span class="required">*</span></label>
+            <input type="text" id="end_time" name="end_time" placeholder="yyyy-mm-dd hh24:mi:ss" required>
+            <span class="error-text" id="err_end_time"></span>
+          </div>
+          <div class="form-group">
+            <label>时段预设</label>
+            <div class="preset-group">
+              <button type="button" class="btn preset-btn active" data-preset="day" onclick="setTimePreset('day', this)">早班段 8:00~17:30</button>
+              <button type="button" class="btn preset-btn" data-preset="night" onclick="setTimePreset('night', this)">晚班段 9:00~19:00</button>
+            </div>
+          </div>
+          <div class="form-group full-width">
+            <label>加班事由 <span class="required">*</span></label>
+            <textarea id="reason" name="reason" placeholder="请输入加班事由" required></textarea>
+            <span class="error-text" id="err_reason"></span>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- 记录列表 -->
+    <div class="card">
+      <div class="card-header">
+        <h2>加班记录列表</h2>
+        <div class="btn-group">
+          <button class="btn btn-success btn-sm" onclick="exportExcel()">导出 Excel</button>
+        </div>
+      </div>
+      <!-- 筛选栏 -->
+      <div class="card-body" style="padding-bottom: 0.75rem;">
+        <div class="filter-bar">
+          <div class="filter-date-range">
+            <input type="date" id="filter_date_from">
+            <span class="filter-date-sep">~</span>
+            <input type="date" id="filter_date_to">
+          </div>
+          <input type="text" id="filter_company" class="filter-input" placeholder="合作公司">
+          <input type="text" id="filter_project_team" class="filter-input" placeholder="项目组">
+          <input type="text" id="filter_employee_id" class="filter-input" placeholder="工号">
+          <input type="text" id="filter_employee_name" class="filter-input" placeholder="姓名">
+          <div class="btn-group">
+            <button class="btn btn-primary btn-sm" onclick="loadRecords(1)">查询</button>
+            <button class="btn btn-outline btn-sm" onclick="resetFilters()">重置</button>
+          </div>
+        </div>
+      </div>
+      <!-- 表格区域 -->
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>序号</th>
+              <th>加班人员</th>
+              <th>工号</th>
+              <th>合作公司</th>
+              <th>项目组</th>
+              <th>PM</th>
+              <th>加班事由</th>
+              <th>加班日期</th>
+              <th>开始时间</th>
+              <th>结束时间</th>
+              <th>登记时间</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="recordsBody">
+            <tr>
+              <td colspan="12" class="empty-state">
+                <div class="loading">加载中...</div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <!-- 分页 -->
+      <div class="pagination" id="pagination">
+        <div class="page-info">
+          <span>共 <strong id="totalCount">0</strong> 条记录</span>
+        </div>
+        <div class="page-nav">
+          <select id="pagination_page_size" onchange="loadRecords(1)">
+            <option value="15">15</option>
+            <option value="30">30</option>
+            <option value="50" selected>50</option>
+            <option value="100">100</option>
+          </select>
+          <div class="page-btns" id="pageBtns"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 编辑弹窗 -->
+  <div class="modal-overlay" id="editModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>编辑加班记录</h3>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="editForm" class="form-grid">
+          <input type="hidden" id="edit_id">
+          <div class="form-group">
+            <label>加班人员 <span class="required">*</span></label>
+            <input type="text" id="edit_employee_name" required>
+          </div>
+          <div class="form-group">
+            <label>工号 <span class="required">*</span></label>
+            <input type="text" id="edit_employee_id" required>
+          </div>
+          <div class="form-group">
+            <label>合作公司 <span class="required">*</span></label>
+            <input type="text" id="edit_company" required>
+          </div>
+          <div class="form-group">
+            <label>项目组 <span class="required">*</span></label>
+            <input type="text" id="edit_project_team" required>
+          </div>
+          <div class="form-group">
+            <label>PM <span class="required">*</span></label>
+            <input type="text" id="edit_pm" required>
+          </div>
+          <div class="form-group">
+            <label>计划加班日期 <span class="required">*</span></label>
+            <input type="date" id="edit_overtime_date" required>
+          </div>
+          <div class="form-group">
+            <label>计划开始时间 <span class="required">*</span></label>
+            <input type="text" id="edit_start_time" required>
+          </div>
+          <div class="form-group">
+            <label>计划结束时间 <span class="required">*</span></label>
+            <input type="text" id="edit_end_time" required>
+          </div>
+          <div class="form-group">
+            <label>时段预设</label>
+            <div class="preset-group">
+              <button type="button" class="btn preset-btn active" data-preset="day" onclick="setEditTimePreset('day', this)">早班段 8:00~17:30</button>
+              <button type="button" class="btn preset-btn" data-preset="night" onclick="setEditTimePreset('night', this)">晚班段 9:00~19:00</button>
+            </div>
+          </div>
+          <div class="form-group full-width">
+            <label>加班事由 <span class="required">*</span></label>
+            <textarea id="edit_reason" required></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal()">取消</button>
+        <button class="btn btn-primary" onclick="saveEdit()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 消息提示 -->
+  <div class="toast" id="toast"></div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
