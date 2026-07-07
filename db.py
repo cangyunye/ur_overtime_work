@@ -446,10 +446,12 @@ def get_stats():
     for row in cur.fetchall():
         d = dict(row)
         try:
-            st = datetime.strptime(d["start_time"], "%Y-%m-%d %H:%M:%S")
-            et = datetime.strptime(d["end_time"], "%Y-%m-%d %H:%M:%S")
+            st_val = d["start_time"]
+            et_val = d["end_time"]
+            st = st_val if isinstance(st_val, datetime) else datetime.strptime(st_val, "%Y-%m-%d %H:%M:%S")
+            et = et_val if isinstance(et_val, datetime) else datetime.strptime(et_val, "%Y-%m-%d %H:%M:%S")
             total_hours += (et - st).total_seconds() / 3600
-        except (ValueError, KeyError):
+        except (ValueError, KeyError, TypeError):
             pass
     stats["monthly_hours"] = round(total_hours, 1)
 
