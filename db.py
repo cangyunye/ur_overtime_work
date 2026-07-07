@@ -418,7 +418,7 @@ def get_stats():
     conn = _get_connection()
     ph = _get_placeholder(0)
 
-    stats = {"weekly_count": 0, "monthly_hours": 0, "pending_count": 0, "total_count": 0}
+    stats = {"weekly_count": 0, "monthly_hours": 0, "total_count": 0}
 
     # 总数
     cur = conn.cursor()
@@ -426,7 +426,6 @@ def get_stats():
     stats["total_count"] = dict(cur.fetchone())["total"]
 
     # 本周人次
-    cur.execute("SELECT MIN(overtime_date) FROM overtime_records")
     today = datetime.now()
     monday = today - timedelta(days=today.weekday())
     monday_str = monday.strftime("%Y-%m-%d")

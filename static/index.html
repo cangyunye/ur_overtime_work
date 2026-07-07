@@ -198,7 +198,7 @@ html, body {
 
 .stats-row {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 10px;
   margin-bottom: 20px;
 }
@@ -816,13 +816,6 @@ tbody td.actions { text-align: right; }
     </div>
     <div class="stat-item">
       <div class="stat-l">
-        <span class="stat-label">待审批记录</span>
-        <span class="stat-value warn" id="statPending">--</span>
-      </div>
-      <div class="stat-r">待审批</div>
-    </div>
-    <div class="stat-item">
-      <div class="stat-l">
         <span class="stat-label">记录总数</span>
         <span class="stat-value success" id="statTotal">--</span>
       </div>
@@ -1163,7 +1156,6 @@ tbody td.actions { text-align: right; }
       .then(function (data) {
         document.getElementById('statWeeklyCount').textContent = (data.weekly_count || '--') + ' 人';
         document.getElementById('statMonthlyHours').textContent = (data.monthly_hours || '--') + ' h';
-        document.getElementById('statPending').textContent = (data.pending_count || '--') + ' 条';
         document.getElementById('statTotal').textContent = (data.total_count || '--') + ' 条';
       })
       .catch(function () { /* offline — keep dashes */ });
