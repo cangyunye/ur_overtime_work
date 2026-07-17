@@ -1382,7 +1382,9 @@ tbody td.actions { text-align: right; }
   function detectShift(st, et) {
     if (!st || !et) return 'day';
     var sh = parseInt(st.slice(-8, -6), 10);
-    return (sh >= 8 && sh < 10) ? 'day' : 'night';
+    var sm = parseInt(st.slice(-5, -3), 10);
+    var minutes = sh * 60 + sm;
+    return minutes > (8 * 60 + 40) ? 'night' : 'day';
   }
 
   // ===== 筛选 =====
