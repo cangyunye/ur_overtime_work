@@ -295,18 +295,81 @@
 
 ---
 
-## 三、启动方式
+## 三、数据库连接保活测试用例
+
+### 3.1 连接保活机制验证
+
+#### TC-027: MySQL 连接自动重连
+
+- **前提**: 使用 MySQL 数据库启动服务
+- **操作步骤**:
+  1. 启动服务: `python3 server.py mysql --db-host <host> --db-user <user> --db-password <pwd> --db-database ot`
+  2. 执行一次正常请求，确认服务正常
+  3. 手动断开数据库连接（如重启 MySQL 服务或执行 `KILL CONNECTION <id>`）
+  4. 等待 5 秒后再次发起请求
+- **请求**:
+  ```bash
+  curl "http://localhost:8080/api/records?page=1&page_size=20"
+  ```
+- **预期响应** (HTTP 200): 正常返回记录列表，服务自动重连成功
+
+#### TC-028: PostgreSQL 连接自动重连
+
+- **前提**: 使用 PostgreSQL 数据库启动服务
+- **操作步骤**:
+  1. 启动服务: `python3 server.py pg --db-host <host> --db-user <user> --db-password <pwd> --db-database ot`
+  2. 执行一次正常请求
+  3. 手动断开数据库连接（如重启 PostgreSQL 或执行 `SELECT pg_terminate_backend(<pid>)`)
+  4. 等待 5 秒后再次发起请求
+- **请求**:
+  ```bash
+  curl "http://localhost:8080/api/stats"
+  ```
+- **预期响应** (HTTP 200): 正常返回统计数据，服务自动重连成功
+
+#### TC-029: SQLite 连接稳定性
+
+- **前提**: 使用 SQLite 数据库启动服务
+- **请求**:
+  ```bash
+  # 连续多次请求，验证连接不会因并发问题失效
+  for i in {1..10}; do
+    curl "http://localhost:8080/api/records?page=1&page_size=20" &
+  done
+  wait
+  ```
+- **预期**: 所有请求均返回 HTTP 200，无连接错误
+
+### 3.2 保活检测原理
+
+| 数据库类型 | 保活方式 | 重连机制 |
+|-----------|---------|---------|
+| SQLite | 无需保活（本地文件） | 无 |
+| MySQL | `conn.ping(reconnect=True)` | pymysql 内置自动重连 |
+| PostgreSQL | `SELECT 1` 查询检测 | 异常时关闭旧连接，重建新连接 |
+
+---
+
+## 四、启动方式
 
 ```bash
 # SQLite 模式 (默认)
 cd overtime_system
-python3 server.py --port 8080
+python3 server.py sqlite3 --port 8080
 
 # MySQL 模式
-python3 server.py --db-type mysql \
-  --mysql-host localhost \
-  --mysql-port 3306 \
-  --mysql-user root \
-  --mysql-password yourpassword \
-  --mysql-database overtime_system
+python3 server.py mysql \
+  --db-host localhost \
+  --db-port 3306 \
+  --db-user root \
+  --db-password yourpassword \
+  --db-database overtime_system
+
+# PostgreSQL 模式
+python3 server.py pg \
+  --db-host localhost \
+  --db-port 5432 \
+  --db-user postgres \
+  --db-password yourpassword \
+  --db-database overtime_system
 ```

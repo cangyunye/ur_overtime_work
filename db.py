@@ -16,49 +16,93 @@ def _get_placeholder(index):
     return "?"
 
 
+def _create_new_connection():
+    """创建新的数据库连接"""
+    if config.DB_TYPE == "sqlite":
+        conn = sqlite3.connect(config.SQLITE_DB_PATH, check_same_thread=False)
+        conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA foreign_keys=ON")
+    elif config.DB_TYPE == "mysql":
+        try:
+            import pymysql
+        except ImportError:
+            raise RuntimeError("使用 MySQL 需要先安装 pymysql: pip install pymysql")
+        mc = config.MYSQL_CONFIG
+        conn = pymysql.connect(
+            host=mc["host"],
+            port=mc["port"],
+            user=mc["user"],
+            password=mc["password"],
+            database=mc["database"],
+            charset=mc["charset"],
+            cursorclass=pymysql.cursors.DictCursor,
+            autocommit=True,
+        )
+    else:  # postgresql
+        try:
+            import psycopg2
+            import psycopg2.extras
+        except ImportError:
+            raise RuntimeError(
+                "使用 PostgreSQL 需要先安装 psycopg2: pip install psycopg2-binary"
+            )
+        pc = config.POSTGRESQL_CONFIG
+        conn = psycopg2.connect(
+            host=pc["host"],
+            port=pc["port"],
+            user=pc["user"],
+            password=pc["password"],
+            dbname=pc["database"],
+        )
+        conn.autocommit = True
+    return conn
+
+
+def _check_connection(conn):
+    """检测连接有效性，无效则抛出异常
+
+    MySQL: 使用 ping() 方法检测，内置重连机制
+    PostgreSQL: 执行简单查询检测
+    SQLite: 无需检测（本地文件数据库）
+    """
+    if config.DB_TYPE == "sqlite":
+        return True
+    elif config.DB_TYPE == "mysql":
+        conn.ping(reconnect=True)
+        return True
+    else:  # postgresql
+        cur = conn.cursor()
+        cur.execute("SELECT 1")
+        cur.close()
+        return True
+
+
 def _get_connection():
-    """获取线程级数据库连接"""
+    """获取线程级数据库连接（带保活检测和自动重连）"""
     if not hasattr(_local, "connection") or _local.connection is None:
-        if config.DB_TYPE == "sqlite":
-            conn = sqlite3.connect(config.SQLITE_DB_PATH, check_same_thread=False)
-            conn.row_factory = sqlite3.Row
-            conn.execute("PRAGMA journal_mode=WAL")
-            conn.execute("PRAGMA foreign_keys=ON")
-        elif config.DB_TYPE == "mysql":
-            try:
-                import pymysql
-            except ImportError:
-                raise RuntimeError("使用 MySQL 需要先安装 pymysql: pip install pymysql")
-            mc = config.MYSQL_CONFIG
-            conn = pymysql.connect(
-                host=mc["host"],
-                port=mc["port"],
-                user=mc["user"],
-                password=mc["password"],
-                database=mc["database"],
-                charset=mc["charset"],
-                cursorclass=pymysql.cursors.DictCursor,
-                autocommit=True,
-            )
-        else:  # postgresql
-            try:
-                import psycopg2
-                import psycopg2.extras
-            except ImportError:
-                raise RuntimeError(
-                    "使用 PostgreSQL 需要先安装 psycopg2: pip install psycopg2-binary"
-                )
-            pc = config.POSTGRESQL_CONFIG
-            conn = psycopg2.connect(
-                host=pc["host"],
-                port=pc["port"],
-                user=pc["user"],
-                password=pc["password"],
-                dbname=pc["database"],
-            )
-            conn.autocommit = True
+        conn = _create_new_connection()
         _local.connection = conn
-    return _local.connection
+        return conn
+
+    conn = _local.connection
+
+    # 保活检测
+    try:
+        _check_connection(conn)
+        return conn
+    except Exception:
+        # 连接已断开，清理旧连接
+        try:
+            conn.close()
+        except Exception:
+            pass
+        _local.connection = None
+
+        # 重新建立连接
+        conn = _create_new_connection()
+        _local.connection = conn
+        return conn
 
 
 def _ensure_dict_cursor(conn, cur):
